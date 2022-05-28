@@ -22,8 +22,8 @@ def get_all_schedules(cursor):
         schedules[team.lower()] = get_schedule(cursor,team)
     return schedules
 
-def get_wl(team_schedule,date):
-    # This method returns the win/lose ratio of a team at a specific date (works only for a date team has a game)
+def get_win_ratio(team_schedule,date):
+    # This method returns the win ratio of a team at a specific date (works only for a date team has a game)
     """
     team_schedule_df = pd.DataFrame(team_schedule, columns=['Game', 'Date', 'Opponent','Home/Away(1/0)','Score','TotalScore'])
     team_schedule_df['Date'] = pd.to_datetime(team_schedule_df['Date'],format='%b %d %Y')
@@ -31,21 +31,22 @@ def get_wl(team_schedule,date):
     row = team_schedule_df[team_schedule_df['Date'] == pd.to_datetime(date,format='%b %d %Y')]
     game_played = row["Game"].values[0]"""
 
-    # First column of team_schedule is game
+    # First column of team_schedule is game. Ex. 46 is 46th game of the season.
     game_played = list(filter(lambda x: x[1]==date,team_schedule))[0][0]
 
+    # To get a meaningful Win/lose ration it is assumed that at least 15 games are needed.
     if game_played <15:
         game_played = 15
+
     win = 0
-    lose = 0
     for row in team_schedule[:game_played]:
         # row[-2] indicates the score of the game, Ex. -19 means the team loses the game by 19
-        if row[-2]<0:
-            lose+=1
-        else:
+        if row[-2]>0:
             win+=1
-    return win/(win+lose)
 
+    return win/game_played
+
+    
 
 
 
