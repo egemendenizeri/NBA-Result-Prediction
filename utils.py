@@ -7,10 +7,12 @@ dic = {"atl":"Atlanta","bkn": "Brooklyn" ,"bos": "Boston", "cha":"Charlotte", "c
 
 def get_schedule(cursor,team):
     # This method gets the schedule of a team from schedule_scores.db
-    # It requires the cursor connected to the schedule_scores.db
+    # It requires a cursor connected to the schedule_scores.db
     # And it requires the name of the team whose schedule wanted to be fetched
 
     cursor.execute("SELECT * FROM {}".format(team.lower()))
+
+    # Method return the data as a list
     return cursor.fetchall()
 
 def get_all_schedules(cursor):
@@ -20,7 +22,30 @@ def get_all_schedules(cursor):
     schedules = {}
     for team in teams:
         schedules[team.lower()] = get_schedule(cursor,team)
+
+    # Method return the data as a list
     return schedules
+
+def get_stats(cursor,team):
+    # This method gets the stats of a team from team_stats.db
+    # It requires a cursor connected to the team_stats.db
+    # And it requires the name of the team whose stats wanted to be fetched
+
+    cursor.execute("SELECT * FROM {}".format(team.lower()))
+
+    # Method return the data as a list
+    return cursor.fetchall()
+
+def get_all_stats(cursor):
+    # This method gets the schedule of each team from schedule_scores.db
+    # It requires the cursor connected to the schedule_scores.db
+
+    stats = {}
+    for team in teams:
+        stats[team.lower()] = get_stats(cursor,team)
+    
+    # Method return the data as a list
+    return stats
 
 def get_win_ratio(team_schedule,date):
     # This method returns the win ratio of a team at a specific date (works only for a date team has a game)
@@ -31,7 +56,7 @@ def get_win_ratio(team_schedule,date):
     row = team_schedule_df[team_schedule_df['Date'] == pd.to_datetime(date,format='%b %d %Y')]
     game_played = row["Game"].values[0]"""
 
-    # First column of team_schedule is game. Ex. 46 is 46th game of the season.
+    # First column of team_schedule is game number. Ex. Game 46 is 46th game of the season.
     game_played = list(filter(lambda x: x[1]==date,team_schedule))[0][0]
 
     # To get a meaningful Win/lose ration it is assumed that at least 15 games are needed.
@@ -46,7 +71,8 @@ def get_win_ratio(team_schedule,date):
 
     return win/game_played
 
-    
+
+
 
 
 
