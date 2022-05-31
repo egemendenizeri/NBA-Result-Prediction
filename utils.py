@@ -72,6 +72,55 @@ def get_win_ratio(team_schedule,date):
     return win/game_played
 
 
+def get_train_test_sets(team,game_number,last_n_games):
+            
+    # Firstly the schedule of the team fetched and we create a pandas dataframe
+    schedules = get_all_schedules(cursor_schedule)
+    schedule_df = pd.DataFrame(schedules[team], columns=['Game', 'Date', 'Opponent','Home/Away(1/0)','Score','TotalScore'])
+    # Date column should be formatted from 'Oct 19 2019' to pandas date
+    schedule_df['Date'] = pd.to_datetime(schedule_df['Date'],format='%b %d %Y')
+
+    # Stats is a dictionary, each key is team name 'atl' and values are data tables have the statistics of that team
+    stats = get_all_stats(cursor_stats)
+
+    data = []
+    for row in schedule_df.iloc[:game_number+1][["Date","Opponent",'Home/Away(1/0)']].values:
+        date = row[0]
+        opponent = row[1]
+        isHomeGame = row[2]
+
+        # team_stats.db has long city names instead of short ones like in the schedule_scores.db 
+        # therefore a dictionary is used to match the team names ex. opponent = "Atlanta" -> opp_short = "atl"
+        opp_short = list(filter(lambda x: x[1] == opponent,list(dic.items())))[0][0]
+
+        # Gets the statistics of a team at specific date from team's table
+        stat_at_date = list(filter(lambda x: x[0] == date,stats[opp_short]))[0]
+        # Get win ratio of the opponent at a specific date and adds to stats
+        win_ratio_at_date = get_win_ratio(schedules[opp_short],date)
+        stat_at_date.append(win_ratio_at_date)
+        # Adding Home or Away game categorized variable Home -> 1, Away -> 0
+        stat_at_date.append(isHomeGame)
+        
+        
+        data.append(stat_at_date)
+    
+    # So the dataframe has each opponents' stats, the opponents which the team we want to predict it's next game is played previously
+    dataframe = pd.DataFrame(data,columns=["Date","GamesPlayed","OffRtg","DefRtg","Pace","FtRate","ThreeFgTend",
+    "TrueS","Efg","TurnOver","OffReb","FtFga","EfgAllow","TurnOvAllow","DefRebAllow","FtFgaAllow","WinRatio","Home/Away"])
+    
+    # If there is not enough previous games to predict desired game the last_n_games variable adjusted.
+    if game_number < last_n_games:
+        last_n_games = game_number - 1
+    
+    # Choosing the last_n_games times predictor value for training data set and the game_number 
+    x_train = dataframe.iloc[game_number-last_n_games:game_number-1,2:]
+    x_test = dataframe.iloc[game_number-1]
+    
+    y_train = schedule_df.iloc[game_number-last_n_games:game_number-1,4]
+    y_test = schedule_df.iloc[game_number-1,4]
+    
+    return x_train,x_test,y_train,y_test
+
 
 
 
